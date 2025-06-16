@@ -1,0 +1,648 @@
+/* Booking Calendar V3 - Clean Villa Lemoni Style */
+
+/* Main widget container */
+.br-calendar-widget {
+    margin-bottom: 40px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* Calendar wrapper */
+.br-calendar-v3 {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    color: #222;
+    background: #fff;
+    border-radius: 0; /* No rounded corners */
+    box-shadow: 0 2px 16px rgba(0,0,0,0.12);
+    overflow: hidden;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* Header */
+.br-calendar-header {
+    padding: 24px;
+    border-bottom: 1px solid #ebebeb;
+    text-align: center;
+}
+
+.br-calendar-header h2,
+.br-calendar-title h3 {
+    margin: 0 0 8px 0;
+    font-size: 28px;
+    font-weight: 400;
+    color: #1a1a1a;
+}
+
+.br-calendar-header p,
+.br-calendar-title p {
+    margin: 0 0 4px 0;
+    color: #666;
+    font-size: 14px;
+}
+
+.br-selection-info {
+    color: #c5a572;
+    font-weight: 500;
+}
+
+/* Calendar Container */
+.br-calendar-container {
+    padding: 20px;
+}
+
+/* Navigation */
+.br-month-navigation,
+.br-calendar-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+    gap: 20px;
+}
+
+.br-nav-button,
+.br-nav-prev,
+.br-nav-next {
+    background: none;
+    border: none;
+    color: #1a1a1a;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    padding: 8px 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
+}
+
+.br-nav-button:hover:not(:disabled),
+.br-nav-prev:hover:not(:disabled),
+.br-nav-next:hover:not(:disabled) {
+    opacity: 0.6;
+}
+
+.br-nav-button:disabled,
+.br-nav-prev:disabled,
+.br-nav-next:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.br-nav-button.prev-month::before,
+.br-nav-prev::before {
+    content: '←';
+    font-size: 18px;
+}
+
+.br-nav-button.next-month::after,
+.br-nav-next::after {
+    content: '→';
+    font-size: 18px;
+}
+
+.br-current-months,
+.br-nav-months {
+    font-size: 18px;
+    font-weight: 500;
+    color: #1a1a1a;
+    text-align: center;
+    flex: 1;
+}
+
+/* Calendar Months Wrapper */
+.br-months-wrapper,
+.br-calendar-months-wrapper {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 30px;
+}
+
+/* Individual Month */
+.br-month,
+.br-calendar-month {
+    min-width: 0;
+    background: #fff;
+    border: 1px solid #e5e5e5;
+    padding: 15px;
+}
+
+.br-month-header {
+    text-align: center;
+    margin-bottom: 15px;
+}
+
+.br-month-header h4 {
+    font-size: 16px;
+    font-weight: 500;
+    color: #1a1a1a;
+    margin: 0;
+    text-transform: capitalize;
+}
+
+/* Calendar Grid */
+.br-calendar-grid,
+.br-month-grid {
+    width: 100%;
+}
+
+/* Weekday Headers */
+.br-weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    margin-bottom: 5px;
+}
+
+.br-day-name,
+.br-weekday {
+    text-align: center;
+    font-size: 12px;
+    font-weight: 600;
+    color: #666;
+    padding: 8px 0;
+    border-bottom: 1px solid #e5e5e5;
+}
+
+/* Days Grid */
+.br-days,
+.br-calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 0;
+}
+
+/* Day Cells */
+.br-calendar-day,
+.br-day {
+    aspect-ratio: 1;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: default;
+    border: 1px solid #e5e5e5;
+    margin: -1px 0 0 -1px;
+    transition: all 0.2s ease;
+    background: #fff;
+    min-height: 50px;
+    box-sizing: border-box;
+}
+
+.br-day-number {
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 1.2;
+    color: #1a1a1a;
+}
+
+.br-day-price {
+    font-size: 11px;
+    font-weight: 600;
+    color: #666;
+    margin-top: 2px;
+}
+
+/* Week Start (Selectable) Days */
+.br-week-start,
+.br-calendar-day.br-week-start {
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.br-week-start.br-available,
+.br-calendar-day.br-week-available {
+    background-color: #e3f2fd;
+    border: 2px solid #1976d2;
+}
+
+.br-week-start.br-available:hover,
+.br-calendar-day.br-week-available:hover {
+    background-color: #bbdefb;
+    transform: scale(1.05);
+}
+
+.br-week-start.br-available .br-day-number,
+.br-calendar-day.br-week-available .br-day-number {
+    color: #1565c0;
+    font-weight: 600;
+}
+
+.br-week-start.br-available .br-day-price,
+.br-calendar-day.br-week-available .br-day-price {
+    color: #1565c0;
+}
+
+/* Selected Week */
+.br-day.br-selected,
+.br-calendar-day.br-selected {
+    background-color: #c5a572 !important;
+    color: #fff;
+}
+
+.br-day.br-selected .br-day-number,
+.br-day.br-selected .br-day-price,
+.br-calendar-day.br-selected .br-day-number,
+.br-calendar-day.br-selected .br-day-price {
+    color: #fff !important;
+}
+
+/* Unavailable/Booked Days */
+.br-week-start.br-unavailable,
+.br-calendar-day.br-booked,
+.br-day.br-booked {
+    background-color: #f5f5f5;
+    cursor: not-allowed;
+}
+
+.br-week-start.br-unavailable .br-day-number,
+.br-calendar-day.br-booked .br-day-number,
+.br-day.br-booked .br-day-number {
+    color: #999;
+    text-decoration: line-through;
+}
+
+.br-week-start.br-unavailable .br-day-price {
+    display: none;
+}
+
+/* Pending Days */
+.br-calendar-day.br-pending,
+.br-day.br-pending {
+    background-color: #fff3cd;
+    cursor: not-allowed;
+}
+
+.br-calendar-day.br-pending .br-day-number,
+.br-day.br-pending .br-day-number {
+    color: #856404;
+}
+
+/* Past Days */
+.br-day.br-past,
+.br-calendar-day.br-past {
+    background-color: #fafafa;
+    cursor: not-allowed;
+}
+
+.br-day.br-past .br-day-number,
+.br-day.br-past .br-day-price,
+.br-calendar-day.br-past .br-day-number,
+.br-calendar-day.br-past .br-day-price {
+    color: #ccc;
+}
+
+/* Other Month Days */
+.br-day.br-empty,
+.br-calendar-day.br-other-month {
+    background-color: #fafafa;
+}
+
+.br-calendar-day.br-other-month .br-day-number {
+    color: #ddd;
+}
+
+/* Selected Weeks Summary */
+.br-selected-weeks,
+.br-selected-weeks-summary {
+    background: #f9f9f9;
+    border: 1px solid #e5e5e5;
+    padding: 20px;
+    margin-top: 24px;
+}
+
+.br-selected-weeks h3,
+.br-selected-weeks-summary h4 {
+    margin: 0 0 16px 0;
+    font-size: 18px;
+    color: #1a1a1a;
+    font-weight: 500;
+}
+
+.br-week-count {
+    color: #c5a572;
+    font-weight: 700;
+}
+
+.br-selected-weeks-list,
+.br-weeks-list {
+    margin-bottom: 16px;
+}
+
+.br-week-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    margin-bottom: 8px;
+}
+
+.br-week-dates {
+    font-size: 14px;
+    color: #222;
+    flex: 1;
+}
+
+.br-week-price {
+    font-weight: 600;
+    color: #c5a572;
+    margin: 0 16px;
+}
+
+.br-remove-week {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 20px;
+    line-height: 1;
+    color: #999;
+    padding: 0 5px;
+    transition: all 0.2s;
+}
+
+.br-remove-week:hover {
+    color: #d93025;
+    transform: scale(1.1);
+}
+
+.br-total-price {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 20px;
+    padding-top: 16px;
+    border-top: 2px solid #e0e0e0;
+}
+
+.br-total-price,
+.br-price-total {
+    color: #1a3a52;
+    font-weight: 600;
+}
+
+/* Loading State */
+.br-calendar-loading {
+    text-align: center;
+    padding: 60px 20px;
+}
+
+.br-spinner,
+.br-loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 2px solid #f3f3f3;
+    border-top: 2px solid #c5a572;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 16px;
+    display: inline-block;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Booking Form */
+.br-booking-form,
+.br-booking-form-container {
+    border-top: 1px solid #ebebeb;
+    background-color: #f7f7f7;
+    padding: 24px;
+    margin-top: 24px;
+}
+
+.br-booking-form h3,
+.br-form-header h3 {
+    margin: 0 0 20px 0;
+    font-size: 22px;
+    font-weight: 500;
+    color: #1a1a1a;
+}
+
+/* Form Layout */
+.br-form-row,
+.br-form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.br-form-group {
+    margin-bottom: 16px;
+}
+
+.br-form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #222;
+}
+
+.br-form-group input,
+.br-form-group textarea {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #b0b0b0;
+    font-size: 16px;
+    transition: border-color 0.2s ease;
+    box-sizing: border-box;
+}
+
+.br-form-group input:focus,
+.br-form-group textarea:focus {
+    outline: none;
+    border-color: #c5a572;
+}
+
+.br-form-group textarea {
+    min-height: 100px;
+    resize: vertical;
+}
+
+/* Submit Button */
+.br-submit-button,
+.br-btn-primary {
+    background-color: #1a3a52;
+    color: #fff;
+    border: none;
+    padding: 14px 30px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    display: inline-block;
+    width: 100%;
+    margin-top: 10px;
+}
+
+.br-submit-button:hover:not(:disabled),
+.br-btn-primary:hover:not(:disabled) {
+    background-color: #0f2436;
+    transform: translateY(-1px);
+}
+
+.br-submit-button:disabled,
+.br-btn-primary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Messages */
+.br-message,
+.br-form-message {
+    margin: 0 0 20px 0;
+    padding: 16px;
+    font-size: 14px;
+    font-weight: 500;
+    border: 1px solid;
+}
+
+.br-message.success,
+.br-form-message.success {
+    background-color: #e3f2fd;
+    color: #0d47a1;
+    border-color: #1976d2;
+}
+
+.br-message.error,
+.br-form-message.error {
+    background-color: #f5f5f5;
+    color: #424242;
+    border-color: #9e9e9e;
+}
+
+/* Legend */
+.br-calendar-legend {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    margin-top: 20px;
+    flex-wrap: wrap;
+}
+
+.br-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: #666;
+}
+
+.br-legend-color {
+    width: 18px;
+    height: 18px;
+    border: 1px solid #e5e5e5;
+}
+
+.br-legend-color.available {
+    background-color: #e3f2fd;
+}
+
+.br-legend-color.selected {
+    background-color: #c5a572;
+}
+
+.br-legend-color.booked {
+    background-color: #f5f5f5;
+}
+
+.br-legend-color.pending {
+    background-color: #fff3cd;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .br-calendar-v3 {
+        box-shadow: none;
+    }
+    
+    .br-calendar-header {
+        padding: 16px;
+    }
+    
+    .br-calendar-container {
+        padding: 16px;
+    }
+    
+    .br-months-wrapper,
+    .br-calendar-months-wrapper {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+    
+    .br-calendar-nav,
+    .br-month-navigation {
+        gap: 10px;
+    }
+    
+    .br-nav-prev span,
+    .br-nav-next span {
+        display: none;
+    }
+    
+    .br-nav-prev,
+    .br-nav-next,
+    .br-nav-button {
+        padding: 8px 12px;
+        background: #f7f7f7;
+    }
+    
+    .br-current-months,
+    .br-nav-months {
+        font-size: 16px;
+    }
+    
+    .br-form-row,
+    .br-form-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .br-week-item {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    
+    .br-week-dates {
+        flex: 1 1 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .br-calendar-header h2,
+    .br-calendar-title h3 {
+        font-size: 24px;
+    }
+    
+    .br-month,
+    .br-calendar-month {
+        padding: 10px;
+    }
+    
+    .br-weekday,
+    .br-day-name {
+        font-size: 11px;
+        padding: 4px 0;
+    }
+    
+    .br-day-number {
+        font-size: 12px;
+    }
+    
+    .br-day-price {
+        font-size: 9px;
+    }
+    
+    .br-calendar-day,
+    .br-day {
+        min-height: 40px;
+    }
+}
