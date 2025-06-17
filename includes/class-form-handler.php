@@ -192,39 +192,42 @@ class BR_Form_Handler {
             wp_send_json_error('Invalid date format');
         }
         
-        // Validate it's exactly 6 nights (Sunday to Saturday)
+        // UPDATED: Validate minimum 3 nights (changed from 6)
         $nights = $checkin->diff($checkout)->days;
-        if ($nights !== 6) {
+        if ($nights < 3) {
             error_log('BR Form Handler - Invalid number of nights: ' . $nights);
-            wp_send_json_error('Bookings must be for exactly 6 nights (Sunday to Saturday). You selected ' . $nights . ' nights.');
+            wp_send_json_error('Minimum stay is 3 nights. You selected ' . $nights . ' night' . ($nights > 1 ? 's' : '') . '.');
         }
         
-        // Validate checkin is Sunday
-        if ($checkin->format('w') != 0) {
-            error_log('BR Form Handler - Check-in not on Sunday. Day: ' . $checkin->format('l'));
-            wp_send_json_error('Check-in must be on Sunday. You selected ' . $checkin->format('l'));
+        // REMOVED: No longer require Sunday check-in
+        // Guests can check in any day of the week
+        
+        // Check availability
+        if (!$this->check_availability($_POST['checkin_date'], $_POST['checkout_date'])) {
+            wp_send_json_error('The selected dates are not available. Please choose different dates.');
         }
         
-        // Parse weeks data
-        $weeks_data = array();
-        if (!empty($_POST['weeks_data'])) {
-            $weeks_data = json_decode(stripslashes($_POST['weeks_data']), true);
-            if (!is_array($weeks_data)) {
-                $weeks_data = array();
+        // NEW: Get additional services
+        $additional_services = array();
+        if (!empty($_POST['additional_services']) && is_array($_POST['additional_services'])) {
+            $additional_services = array_map('sanitize_text_field', $_POST['additional_services']);
+        }
+        error_log('BR Form Handler - Additional services: ' . print_r($additional_services, true));
+        
+        // UPDATED: Calculate total price using pricing engine
+        $pricing_engine = new BR_Pricing_Engine();
+        $total_price = $pricing_engine->calculate_total_price(
+            $_POST['checkin_date'],
+            $_POST['checkout_date']
+        );
+        
+        // If price override provided (for special cases), use it
+        if (!empty($_POST['total_price'])) {
+            $submitted_price = floatval($_POST['total_price']);
+            if ($submitted_price > 0 && abs($submitted_price - $total_price) < 1) {
+                // Allow if difference is less than 1 euro (rounding)
+                $total_price = $submitted_price;
             }
-        }
-        
-        // Calculate total price from weeks data
-        $total_price = 0;
-        foreach ($weeks_data as $week) {
-            if (isset($week['rate'])) {
-                $total_price += floatval($week['rate']);
-            }
-        }
-        
-        // If no weeks data, use the submitted total price
-        if (empty($weeks_data) && !empty($_POST['total_price'])) {
-            $total_price = floatval($_POST['total_price']);
         }
         
         // Prepare booking data
@@ -236,10 +239,11 @@ class BR_Form_Handler {
             'checkout_date' => $checkout->format('Y-m-d'),
             'total_price' => $total_price,
             'message' => sanitize_textarea_field($_POST['message'] ?? ''),
+            'additional_services' => maybe_serialize($additional_services), // NEW: Store services
             'status' => 'pending',
             'created_at' => current_time('mysql'),
             'booking_data' => maybe_serialize(array(
-                'weeks' => $weeks_data,
+                'nights' => $nights,
                 'form_source' => 'calendar_widget',
                 'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? '',
                 'ip_address' => $_SERVER['REMOTE_ADDR'] ?? ''
@@ -276,7 +280,9 @@ class BR_Form_Handler {
             'debug' => array(
                 'nights' => $nights,
                 'checkin_day' => $checkin->format('l'),
-                'total_price' => $total_price
+                'checkout_day' => $checkout->format('l'),
+                'total_price' => $total_price,
+                'services_count' => count($additional_services)
             )
         ));
     }
@@ -296,6 +302,7 @@ class BR_Form_Handler {
             'checkout_date' => sanitize_text_field($data['checkout_date'] ?? ''),
             'total_price' => floatval($data['total_price'] ?? 0),
             'message' => sanitize_textarea_field($data['message'] ?? ''),
+            'additional_services' => '', // Add services handling if needed
             'status' => 'pending',
             'created_at' => current_time('mysql'),
             'booking_data' => maybe_serialize(array(
@@ -331,6 +338,7 @@ class BR_Form_Handler {
             'checkin_date' => rgar($entry, $field_mappings['checkin_date'] ?? '4'),
             'checkout_date' => rgar($entry, $field_mappings['checkout_date'] ?? '5'),
             'message' => rgar($entry, $field_mappings['message'] ?? '6'),
+            'additional_services' => '', // Map services if available
             'status' => 'pending',
             'created_at' => current_time('mysql'),
             'booking_data' => maybe_serialize(array(
@@ -340,6 +348,15 @@ class BR_Form_Handler {
                 'form_title' => $form['title']
             ))
         );
+        
+        // Map additional services if configured
+        if (!empty($field_mappings['additional_services'])) {
+            $services_field_id = $field_mappings['additional_services'];
+            $services = rgar($entry, $services_field_id);
+            if (!empty($services)) {
+                $booking_data['additional_services'] = maybe_serialize(explode(',', $services));
+            }
+        }
         
         // Calculate price based on dates
         $pricing_engine = new BR_Pricing_Engine();
@@ -407,10 +424,10 @@ class BR_Form_Handler {
             return true; // If no table, assume available
         }
         
-        // Check for overlapping approved bookings
+        // Check for overlapping approved or pending bookings
         $overlap = $wpdb->get_var($wpdb->prepare(
             "SELECT COUNT(*) FROM $table_name 
-            WHERE status = 'approved' 
+            WHERE status IN ('approved', 'pending')
             AND (
                 (checkin_date <= %s AND checkout_date > %s) OR
                 (checkin_date < %s AND checkout_date >= %s) OR
@@ -442,7 +459,7 @@ add_action('wp_footer', function() {
                     email: 'test@example.com',
                     phone: '123-456-7890',
                     checkin_date: '2025-06-15',
-                    checkout_date: '2025-06-21'
+                    checkout_date: '2025-06-18'  // Changed to 3 nights instead of 6
                 }).done(function(response) {
                     console.log('Form handler test response:', response);
                 }).fail(function(xhr) {
@@ -451,7 +468,7 @@ add_action('wp_footer', function() {
             }
             
             // Log form submission
-            $(document).on('submit', '.br-booking-form', function(e) {
+            $(document).on('submit', '.br-booking-form-inner', function(e) {
                 console.log('=== FORM SUBMISSION DEBUG ===');
                 console.log('Form action:', $(this).attr('action'));
                 console.log('Form method:', $(this).attr('method'));
@@ -461,6 +478,15 @@ add_action('wp_footer', function() {
                 $(this).find('input, textarea, select').each(function() {
                     console.log('Field:', $(this).attr('name'), '=', $(this).val());
                 });
+                
+                // Log checkbox values specifically
+                var services = [];
+                $(this).find('input[name="services[]"]:checked').each(function() {
+                    services.push($(this).val());
+                });
+                if (services.length > 0) {
+                    console.log('Selected services:', services);
+                }
             });
         });
         </script>

@@ -6,11 +6,13 @@
             this.container = container;
             this.currentOffset = 0;
             this.monthsToShow = 2;
-            this.selectedWeeks = [];
+            this.selectedDates = [];
             this.pricingData = {};
             this.bookedDates = [];
             this.startDayNumber = 0; // Default to Sunday
-            this.maxWeeks = 8; // Maximum weeks that can be selected
+            this.minNights = 3; // Minimum 3 nights
+            this.selectedCheckIn = null;
+            this.selectedCheckOut = null;
             
             this.init();
         }
@@ -66,8 +68,6 @@
                     if (response.success) {
                         self.pricingData = response.data.pricing_data || {};
                         self.bookedDates = response.data.booked_dates || [];
-                        self.startDayNumber = response.data.start_day || self.startDayNumber;
-                        console.log('Calendar data loaded. Start day:', self.startDayNumber);
                         self.renderCalendar();
                     } else {
                         self.showError(response.data || 'Failed to load calendar data');
@@ -82,8 +82,8 @@
         renderCalendar() {
             const calendarHTML = `
                 <div class="br-calendar-header">
-                    <h2>${br_calendar.strings.select_week}</h2>
-                    <p>Select your check-in date (${this.getDayName(this.startDayNumber)})</p>
+                    <h2>Select Your Stay</h2>
+                    <p>Choose your check-in and check-out dates (minimum ${this.minNights} nights)</p>
                 </div>
                 <div class="br-month-navigation">
                     <button class="br-nav-button prev-month">Previous Month</button>
@@ -91,12 +91,16 @@
                     <button class="br-nav-button next-month">Next Month</button>
                 </div>
                 <div class="br-calendar-container"></div>
-                <div class="br-selected-weeks" style="display:none;">
-                    <h3>Selected Weeks</h3>
-                    <div class="br-selected-weeks-list"></div>
-                    <div class="br-total-price"></div>
+                <div class="br-selected-dates">
+                    <h3>Selected Times</h3>
+                    <div class="br-selected-dates-info">
+                        <p class="br-checkin-info">Check-in: <span class="br-checkin-date">Not selected</span></p>
+                        <p class="br-checkout-info">Check-out: <span class="br-checkout-date">Not selected</span></p>
+                        <p class="br-nights-info">Nights: <span class="br-nights-count">0</span></p>
+                        <p class="br-total-price-info">Total Price: <span class="br-total-amount">€0</span></p>
+                    </div>
                 </div>
-                <div class="br-booking-form" style="display:none;">
+                <div class="br-booking-form">
                     <h3>Guest Information</h3>
                     <form class="br-booking-form-inner">
                         <div class="br-form-row">
@@ -123,7 +127,45 @@
                             <label for="br-message">Message (Optional)</label>
                             <textarea id="br-message" name="message"></textarea>
                         </div>
-                        <button type="submit" class="br-submit-button">Submit Booking Request</button>
+                        
+                        <div class="br-additional-services">
+                            <h4>Additional Services</h4>
+                            <p class="br-services-note">Select all that apply. Prices are provided upon request.</p>
+                            <div class="br-service-options">
+                                <label class="br-checkbox-label">
+                                    <input type="checkbox" name="services[]" value="taxi_service">
+                                    <span>Taxi service from and to the airport</span>
+                                </label>
+                                <label class="br-checkbox-label">
+                                    <input type="checkbox" name="services[]" value="greeting_service">
+                                    <span>Greeting service – to welcome you to the Villa and overview the region</span>
+                                </label>
+                                <label class="br-checkbox-label">
+                                    <input type="checkbox" name="services[]" value="welcome_hamper">
+                                    <span>Welcome hamper on arrival</span>
+                                </label>
+                                <label class="br-checkbox-label">
+                                    <input type="checkbox" name="services[]" value="sailing">
+                                    <span>Sailing</span>
+                                </label>
+                                <label class="br-checkbox-label">
+                                    <input type="checkbox" name="services[]" value="motorboat_hire">
+                                    <span>Motorboat hire</span>
+                                </label>
+                                <label class="br-checkbox-label">
+                                    <input type="checkbox" name="services[]" value="flight_bookings">
+                                    <span>Flight bookings (from the UK)</span>
+                                </label>
+                                <label class="br-checkbox-label">
+                                    <input type="checkbox" name="services[]" value="car_hire">
+                                    <span>Car hire booking service</span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="br-submit-wrapper">
+                            <button type="submit" class="br-submit-button">Submit Booking Request</button>
+                        </div>
                     </form>
                 </div>
             `;
@@ -184,10 +226,6 @@
                         <span>Selected</span>
                     </div>
                     <div class="br-legend-item">
-                        <div class="br-legend-color pending"></div>
-                        <span>Pending</span>
-                    </div>
-                    <div class="br-legend-item">
                         <div class="br-legend-color booked"></div>
                         <span>Booked</span>
                     </div>
@@ -199,36 +237,22 @@
             // Add click handlers
             this.attachDayClickHandlers();
             
-            // Highlight selected weeks
-            this.selectedWeeks.forEach(week => {
-                const startDate = new Date(week.start);
-                const endDate = new Date(week.end);
-                
-                // Highlight all 7 days of the selected week
-                let currentDate = new Date(startDate);
-                while (currentDate <= endDate) {
-                    const dayElement = this.container.querySelector(`[data-date="${currentDate.toISOString().split('T')[0]}"]`);
-                    if (dayElement) {
-                        dayElement.classList.add('br-selected');
-                    }
-                    currentDate.setDate(currentDate.getDate() + 1);
+            // Highlight selected dates
+            if (this.selectedCheckIn && this.selectedCheckOut) {
+                this.highlightDateRange(this.selectedCheckIn, this.selectedCheckOut);
+            } else if (this.selectedCheckIn) {
+                const dayElement = this.container.querySelector(`[data-date="${this.selectedCheckIn}"]`);
+                if (dayElement) {
+                    dayElement.classList.add('br-selected', 'br-checkin');
                 }
-            });
+            }
 
-            // Add pending status styling
+            // Mark booked dates
             this.bookedDates.forEach(dateInfo => {
-                if (typeof dateInfo === 'object' && dateInfo.status === 'pending') {
-                    const dayElement = this.container.querySelector(`[data-date="${dateInfo.date}"]`);
-                    if (dayElement) {
-                        dayElement.classList.remove('br-booked');
-                        dayElement.classList.add('br-pending');
-                    }
-                } else {
-                    // Legacy support for simple date strings
-                    const dayElement = this.container.querySelector(`[data-date="${dateInfo}"]`);
-                    if (dayElement) {
-                        dayElement.classList.add('br-booked');
-                    }
+                const date = typeof dateInfo === 'object' ? dateInfo.date : dateInfo;
+                const dayElement = this.container.querySelector(`[data-date="${date}"]`);
+                if (dayElement) {
+                    dayElement.classList.add('br-booked');
                 }
             });
         }
@@ -276,142 +300,180 @@
 
         renderDay(date, today, isOtherMonth) {
             const dateStr = date.toISOString().split('T')[0];
-            const dayOfWeek = date.getDay();
             const isPast = date < today;
-            const isStartDay = dayOfWeek === this.startDayNumber;
-            const pricingInfo = this.pricingData[dateStr];
+            const isBooked = this.bookedDates.includes(dateStr);
             
             let classes = ['br-calendar-day'];
             if (isOtherMonth) classes.push('br-other-month');
             if (isPast) classes.push('br-past');
-            if (isStartDay && !isPast && pricingInfo && pricingInfo.available) {
-                classes.push('br-week-start', 'br-week-available');
-            }
+            if (!isPast && !isBooked && !isOtherMonth) classes.push('br-available');
+            
+            // Get pricing for this date
+            const pricingInfo = this.pricingData[dateStr];
             
             let html = `<div class="${classes.join(' ')}" data-date="${dateStr}">`;
             html += `<div class="br-day-number">${date.getDate()}</div>`;
             
-            if (isStartDay && pricingInfo && !isPast && !isOtherMonth) {
-                const formattedPrice = br_calendar.currency_symbol + 
-                    new Intl.NumberFormat('en-US').format(pricingInfo.rate);
-                html += `<div class="br-day-price">${formattedPrice}</div>`;
+            // Show daily price if available and not past/other month/booked
+            if (pricingInfo && !isPast && !isOtherMonth && !isBooked) {
+                const dailyPrice = br_calendar.currency_symbol + 
+                    new Intl.NumberFormat('de-DE').format(Math.round(pricingInfo.daily_rate));
+                html += `<div class="br-day-price">${dailyPrice}</div>`;
             }
             
             html += '</div>';
             return html;
         }
 
-        getDayName(dayNumber) {
-            const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-            return days[dayNumber];
-        }
-
         attachDayClickHandlers() {
             const self = this;
-            $(this.container).find('.br-week-start').on('click', function() {
+            $(this.container).find('.br-calendar-day.br-available').on('click', function() {
                 const dateStr = $(this).data('date');
-                self.handleWeekSelection(dateStr);
+                self.handleDateSelection(dateStr);
             });
         }
 
-        handleWeekSelection(startDateStr) {
-            const startDate = new Date(startDateStr);
-            const endDate = new Date(startDate);
-            endDate.setDate(endDate.getDate() + 6); // 6 nights
+        handleDateSelection(dateStr) {
+            // Ensure we're working with the correct date (not shifted)
+            const selectedDate = new Date(dateStr + 'T00:00:00');
+            const actualDateStr = selectedDate.toISOString().split('T')[0];
             
-            const weekKey = startDateStr;
-            const existingIndex = this.selectedWeeks.findIndex(w => w.start === weekKey);
-            
-            if (existingIndex !== -1) {
-                // Remove week if already selected
-                this.selectedWeeks.splice(existingIndex, 1);
+            if (!this.selectedCheckIn || (this.selectedCheckIn && this.selectedCheckOut)) {
+                // First selection or resetting
+                this.selectedCheckIn = actualDateStr;
+                this.selectedCheckOut = null;
+                this.selectedDates = [actualDateStr];
             } else {
-                // Check if we've reached the maximum
-                if (this.selectedWeeks.length >= this.maxWeeks) {
-                    this.showError(`You can select a maximum of ${this.maxWeeks} weeks`);
-                    return;
-                }
+                // Second selection
+                const checkInDate = new Date(this.selectedCheckIn + 'T00:00:00');
+                const checkOutDate = new Date(actualDateStr + 'T00:00:00');
                 
-                // Add week
-                const pricingInfo = this.pricingData[startDateStr];
-                if (pricingInfo && pricingInfo.available) {
-                    this.selectedWeeks.push({
-                        start: startDateStr,
-                        end: endDate.toISOString().split('T')[0],
-                        rate: pricingInfo.rate
-                    });
-                    
-                    // Sort by date
-                    this.selectedWeeks.sort((a, b) => new Date(a.start) - new Date(b.start));
+                if (checkOutDate <= checkInDate) {
+                    // If selected date is before or same as check-in, reset
+                    this.selectedCheckIn = actualDateStr;
+                    this.selectedCheckOut = null;
+                    this.selectedDates = [actualDateStr];
                 } else {
-                    this.showError(br_calendar.strings.week_unavailable);
-                    return;
+                    // Valid check-out date
+                    const nights = Math.round((checkOutDate - checkInDate) / (1000 * 60 * 60 * 24));
+                    
+                    if (nights < this.minNights) {
+                        this.showError(`Minimum stay is ${this.minNights} nights. You selected ${nights} night${nights > 1 ? 's' : ''}.`);
+                        return;
+                    }
+                    
+                    // Check if any dates in range are booked
+                    const datesInRange = this.getDatesInRange(checkInDate, checkOutDate);
+                    const hasBookedDates = datesInRange.some(date => this.bookedDates.includes(date));
+                    
+                    if (hasBookedDates) {
+                        this.showError('Some dates in your selection are already booked. Please choose different dates.');
+                        return;
+                    }
+                    
+                    this.selectedCheckOut = actualDateStr;
+                    this.selectedDates = datesInRange;
                 }
             }
             
             this.renderMonths();
-            this.updateSelectedWeeksSummary();
+            this.updateSelectedDatesInfo();
         }
 
-        updateSelectedWeeksSummary() {
-            const container = $(this.container).find('.br-selected-weeks');
-            const list = container.find('.br-selected-weeks-list');
+        getDatesInRange(startDate, endDate) {
+            const dates = [];
+            const current = new Date(startDate);
             
-            if (this.selectedWeeks.length === 0) {
-                container.hide();
-                $(this.container).find('.br-booking-form').hide();
-                return;
+            while (current < endDate) {
+                dates.push(current.toISOString().split('T')[0]);
+                current.setDate(current.getDate() + 1);
             }
             
-            container.show();
-            $(this.container).find('.br-booking-form').show();
+            return dates;
+        }
+
+        highlightDateRange(startDateStr, endDateStr) {
+            const startDate = new Date(startDateStr + 'T00:00:00');
+            const endDate = new Date(endDateStr + 'T00:00:00');
+            const current = new Date(startDate);
             
-            let html = '';
+            while (current < endDate) {
+                const dateStr = current.toISOString().split('T')[0];
+                const dayElement = this.container.querySelector(`[data-date="${dateStr}"]`);
+                if (dayElement) {
+                    dayElement.classList.add('br-selected');
+                    if (dateStr === startDateStr) {
+                        dayElement.classList.add('br-checkin');
+                    }
+                }
+                current.setDate(current.getDate() + 1);
+            }
+            
+            // Handle checkout date separately to ensure it's marked correctly
+            const checkoutDateStr = endDateStr;
+            const checkoutElement = this.container.querySelector(`[data-date="${checkoutDateStr}"]`);
+            if (checkoutElement) {
+                checkoutElement.classList.add('br-selected', 'br-checkout');
+            }
+        }
+
+        updateSelectedDatesInfo() {
+            const container = $(this.container);
+            
+            if (this.selectedCheckIn) {
+                const checkInDate = new Date(this.selectedCheckIn + 'T00:00:00');
+                container.find('.br-checkin-date').text(checkInDate.toLocaleDateString('en-US', { 
+                    weekday: 'short', 
+                    month: 'short', 
+                    day: 'numeric',
+                    year: 'numeric'
+                }));
+            } else {
+                container.find('.br-checkin-date').text('Not selected');
+            }
+            
+            if (this.selectedCheckOut) {
+                const checkOutDate = new Date(this.selectedCheckOut + 'T00:00:00');
+                container.find('.br-checkout-date').text(checkOutDate.toLocaleDateString('en-US', { 
+                    weekday: 'short', 
+                    month: 'short', 
+                    day: 'numeric',
+                    year: 'numeric'
+                }));
+                
+                // Calculate nights and price
+                const checkInDate = new Date(this.selectedCheckIn + 'T00:00:00');
+                const nights = Math.round((checkOutDate - checkInDate) / (1000 * 60 * 60 * 24));
+                container.find('.br-nights-count').text(nights);
+                
+                // Calculate total price
+                const totalPrice = this.calculateTotalPrice(this.selectedCheckIn, this.selectedCheckOut);
+                container.find('.br-total-amount').text('€' + new Intl.NumberFormat('en-US').format(totalPrice));
+            } else {
+                container.find('.br-checkout-date').text('Not selected');
+                container.find('.br-nights-count').text('0');
+                container.find('.br-total-amount').text('€0');
+            }
+        }
+
+        calculateTotalPrice(checkInStr, checkOutStr) {
+            const checkIn = new Date(checkInStr + 'T00:00:00');
+            const checkOut = new Date(checkOutStr + 'T00:00:00');
+            const nights = Math.round((checkOut - checkIn) / (1000 * 60 * 60 * 24));
+            
             let totalPrice = 0;
+            let current = new Date(checkIn);
             
-            this.selectedWeeks.forEach((week, index) => {
-                const startDate = new Date(week.start);
-                const endDate = new Date(week.end);
-                const formattedStart = startDate.toLocaleDateString('en-US', { 
-                    weekday: 'short', 
-                    month: 'short', 
-                    day: 'numeric',
-                    year: 'numeric'
-                });
-                const formattedEnd = endDate.toLocaleDateString('en-US', { 
-                    weekday: 'short', 
-                    month: 'short', 
-                    day: 'numeric',
-                    year: 'numeric'
-                });
-                const formattedPrice = br_calendar.currency_symbol + 
-                    new Intl.NumberFormat('en-US').format(week.rate);
-                
-                html += `
-                    <div class="br-week-item">
-                        <span class="br-week-dates">${formattedStart} - ${formattedEnd}</span>
-                        <span class="br-week-price">${formattedPrice}</span>
-                        <button class="br-remove-week" data-index="${index}">×</button>
-                    </div>
-                `;
-                
-                totalPrice += week.rate;
-            });
+            // Sum up daily rates for the stay
+            while (current < checkOut) {
+                const dateStr = current.toISOString().split('T')[0];
+                if (this.pricingData[dateStr] && this.pricingData[dateStr].daily_rate) {
+                    totalPrice += parseFloat(this.pricingData[dateStr].daily_rate);
+                }
+                current.setDate(current.getDate() + 1);
+            }
             
-            list.html(html);
-            
-            const formattedTotal = br_calendar.currency_symbol + 
-                new Intl.NumberFormat('en-US').format(totalPrice);
-            container.find('.br-total-price').html(`Total: ${formattedTotal}`);
-            
-            // Bind remove handlers
-            const self = this;
-            container.find('.br-remove-week').on('click', function() {
-                const index = $(this).data('index');
-                self.selectedWeeks.splice(index, 1);
-                self.renderMonths();
-                self.updateSelectedWeeksSummary();
-            });
+            return Math.round(totalPrice);
         }
 
         bindEvents() {
@@ -442,12 +504,27 @@
             const form = $(this.container).find('.br-booking-form-inner');
             const submitButton = form.find('.br-submit-button');
             
-            // Disable submit button
-            submitButton.prop('disabled', true).text('Processing...');
+            // Prevent double submission
+            if (submitButton.prop('disabled')) {
+                return;
+            }
             
-            // Get first and last dates from selected weeks
-            const firstWeek = this.selectedWeeks[0];
-            const lastWeek = this.selectedWeeks[this.selectedWeeks.length - 1];
+            // Validate dates are selected
+            if (!this.selectedCheckIn || !this.selectedCheckOut) {
+                this.showError('Please select check-in and check-out dates');
+                return;
+            }
+            
+            // Get selected services
+            const selectedServices = [];
+            form.find('input[name="services[]"]:checked').each(function() {
+                selectedServices.push($(this).val());
+            });
+            
+            // Disable submit button and prevent resubmission
+            submitButton.prop('disabled', true).text('Processing...');
+            form.addClass('submitting');
+            form.find('input, textarea, select').prop('readonly', true);
             
             // Prepare data
             const formData = {
@@ -458,10 +535,10 @@
                 email: form.find('#br-email').val(),
                 phone: form.find('#br-phone').val(),
                 message: form.find('#br-message').val(),
-                checkin_date: firstWeek.start,
-                checkout_date: lastWeek.end,
-                weeks_data: JSON.stringify(this.selectedWeeks),
-                total_price: this.selectedWeeks.reduce((sum, week) => sum + week.rate, 0)
+                checkin_date: this.selectedCheckIn,
+                checkout_date: this.selectedCheckOut,
+                additional_services: selectedServices,
+                total_price: this.calculateTotalPrice(this.selectedCheckIn, this.selectedCheckOut)
             };
             
             $.ajax({
@@ -473,20 +550,30 @@
                         self.showSuccess(response.data.message || br_calendar.strings.booking_submitted);
                         // Reset form and selection
                         form[0].reset();
-                        self.selectedWeeks = [];
+                        form.removeClass('submitting');
+                        form.find('input, textarea, select').prop('readonly', false);
+                        submitButton.prop('disabled', false).text('Submit Booking Request');
+                        self.selectedCheckIn = null;
+                        self.selectedCheckOut = null;
+                        self.selectedDates = [];
                         self.renderMonths();
-                        self.updateSelectedWeeksSummary();
+                        self.updateSelectedDatesInfo();
                         // Reload calendar data to show new booking
                         setTimeout(() => self.loadCalendarData(), 2000);
                     } else {
                         self.showError(response.data || br_calendar.strings.error);
+                        // Re-enable form on error
+                        submitButton.prop('disabled', false).text('Submit Booking Request');
+                        form.removeClass('submitting');
+                        form.find('input, textarea, select').prop('readonly', false);
                     }
                 },
                 error: function() {
                     self.showError(br_calendar.strings.error);
-                },
-                complete: function() {
+                    // Re-enable form on error
                     submitButton.prop('disabled', false).text('Submit Booking Request');
+                    form.removeClass('submitting');
+                    form.find('input, textarea, select').prop('readonly', false);
                 }
             });
         }
@@ -504,17 +591,20 @@
             $(this.container).find('.br-message').remove();
             
             const messageHtml = `<div class="br-message ${type}">${message}</div>`;
-            $(this.container).prepend(messageHtml);
+            
+            // Append message after the booking form (at the bottom)
+            $(this.container).find('.br-booking-form').after(messageHtml);
             
             // Scroll to message
+            const messageElement = $(this.container).find('.br-message');
             $('html, body').animate({
-                scrollTop: $(this.container).offset().top - 100
+                scrollTop: messageElement.offset().top - 100
             }, 300);
             
             // Auto-hide after 5 seconds
             setTimeout(() => {
-                $(this.container).find('.br-message').fadeOut(() => {
-                    $(this.container).find('.br-message').remove();
+                messageElement.fadeOut(() => {
+                    messageElement.remove();
                 });
             }, 5000);
         }

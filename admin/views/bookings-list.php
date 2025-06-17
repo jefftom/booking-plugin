@@ -26,6 +26,7 @@ if (isset($_GET['message'])) {
 
 <div class="wrap">
     <h1 class="wp-heading-inline">Booking Requests</h1>
+    <a href="<?php echo admin_url('admin.php?page=booking-requests-add'); ?>" class="page-title-action">Add New</a>
     
     <ul class="subsubsub">
         <li class="all">
@@ -63,7 +64,9 @@ if (isset($_GET['message'])) {
                 <th>Phone</th>
                 <th>Check-in</th>
                 <th>Check-out</th>
+                <th>Nights</th>
                 <th>Total Price</th>
+                <th>Services</th>
                 <th>Status</th>
                 <th>Created</th>
                 <th>Actions</th>
@@ -71,12 +74,17 @@ if (isset($_GET['message'])) {
         </thead>
         <tbody>
             <?php if (!empty($bookings)) : ?>
-                <?php foreach ($bookings as $booking) : ?>
+                <?php foreach ($bookings as $booking) : 
+                    $checkin = new DateTime($booking->checkin_date);
+                    $checkout = new DateTime($booking->checkout_date);
+                    $nights = $checkin->diff($checkout)->days;
+                    $services = maybe_unserialize($booking->additional_services);
+                ?>
                     <tr>
                         <td><?php echo $booking->id; ?></td>
                         <td>
                             <strong>
-                                <a href="<?php echo admin_url('admin.php?page=booking-requests&action=view&booking_id=' . $booking->id); ?>">
+                                <a href="<?php echo admin_url('admin.php?page=booking-requests-edit&booking_id=' . $booking->id); ?>">
                                     <?php echo esc_html($booking->guest_name); ?>
                                 </a>
                             </strong>
@@ -89,7 +97,17 @@ if (isset($_GET['message'])) {
                         <td><?php echo esc_html($booking->phone); ?></td>
                         <td><?php echo date('M j, Y', strtotime($booking->checkin_date)); ?></td>
                         <td><?php echo date('M j, Y', strtotime($booking->checkout_date)); ?></td>
-                        <td>€<?php echo number_format($booking->total_price, 0, ',', '.'); ?></td>
+                        <td><?php echo $nights; ?></td>
+                        <td>€<?php echo number_format($booking->total_price, 0, '.', ','); ?></td>
+                        <td>
+                            <?php if (!empty($services) && is_array($services)): ?>
+                                <span title="<?php echo esc_attr(count($services) . ' services'); ?>">
+                                    <?php echo count($services); ?> ✓
+                                </span>
+                            <?php else: ?>
+                                -
+                            <?php endif; ?>
+                        </td>
                         <td>
                             <?php
                             $status_class = '';
@@ -111,6 +129,10 @@ if (isset($_GET['message'])) {
                         </td>
                         <td><?php echo date('M j, Y', strtotime($booking->created_at)); ?></td>
                         <td>
+                            <a href="<?php echo admin_url('admin.php?page=booking-requests-edit&booking_id=' . $booking->id); ?>" 
+                               class="button button-small">
+                                Edit
+                            </a>
                             <?php if ($booking->status === 'pending') : ?>
                                 <a href="<?php echo wp_nonce_url(admin_url('admin.php?page=booking-requests&action=approve&booking_id=' . $booking->id), 'booking_action'); ?>" 
                                    class="button button-small button-primary"
@@ -133,7 +155,7 @@ if (isset($_GET['message'])) {
                 <?php endforeach; ?>
             <?php else : ?>
                 <tr>
-                    <td colspan="10">No bookings found.</td>
+                    <td colspan="12">No bookings found.</td>
                 </tr>
             <?php endif; ?>
         </tbody>

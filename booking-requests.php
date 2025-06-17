@@ -128,14 +128,7 @@ function br_init() {
     }
 }
 
-// Initialize email actions
-add_action('init', 'br_init_email_actions');
-function br_init_email_actions() {
-    // Ensure email handler is loaded and instantiated
-    if (class_exists('BR_Email_Handler')) {
-        new BR_Email_Handler();
-    }
-}
+
 
 // Register Elementor widgets
 function br_register_elementor_widgets() {

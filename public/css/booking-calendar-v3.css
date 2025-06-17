@@ -1,4 +1,4 @@
-/* Booking Calendar V3 - Clean Villa Lemoni Style */
+/* Booking Calendar V3 - Updated Villa Lemoni Style */
 
 /* Main widget container */
 .br-calendar-widget {
@@ -12,7 +12,7 @@
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     color: #222;
     background: #fff;
-    border-radius: 0; /* No rounded corners */
+    border-radius: 0;
     box-shadow: 0 2px 16px rgba(0,0,0,0.12);
     overflow: hidden;
     width: 100%;
@@ -132,29 +132,21 @@
 .br-month-header {
     text-align: center;
     margin-bottom: 15px;
-}
-
-.br-month-header h4 {
     font-size: 16px;
     font-weight: 500;
     color: #1a1a1a;
-    margin: 0;
     text-transform: capitalize;
 }
 
 /* Calendar Grid */
 .br-calendar-grid,
 .br-month-grid {
-    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 0;
 }
 
 /* Weekday Headers */
-.br-weekdays {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    margin-bottom: 5px;
-}
-
 .br-day-name,
 .br-weekday {
     text-align: center;
@@ -163,14 +155,6 @@
     color: #666;
     padding: 8px 0;
     border-bottom: 1px solid #e5e5e5;
-}
-
-/* Days Grid */
-.br-days,
-.br-calendar-grid {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 0;
 }
 
 /* Day Cells */
@@ -198,86 +182,76 @@
     color: #1a1a1a;
 }
 
-.br-day-price {
-    font-size: 11px;
-    font-weight: 600;
-    color: #666;
-    margin-top: 2px;
-}
-
-/* Week Start (Selectable) Days */
-.br-week-start,
-.br-calendar-day.br-week-start {
+/* Available Days */
+.br-calendar-day.br-available {
     cursor: pointer;
-    font-weight: 600;
+    background-color: #f8f9fa;
 }
 
-.br-week-start.br-available,
-.br-calendar-day.br-week-available {
-    background-color: #e3f2fd;
-    border: 2px solid #1976d2;
-}
-
-.br-week-start.br-available:hover,
-.br-calendar-day.br-week-available:hover {
-    background-color: #bbdefb;
+.br-calendar-day.br-available:hover {
+    background-color: #d4a574; /* Gold hover */
     transform: scale(1.05);
 }
 
-.br-week-start.br-available .br-day-number,
-.br-calendar-day.br-week-available .br-day-number {
-    color: #1565c0;
-    font-weight: 600;
-}
-
-.br-week-start.br-available .br-day-price,
-.br-calendar-day.br-week-available .br-day-price {
-    color: #1565c0;
-}
-
-/* Selected Week */
-.br-day.br-selected,
-.br-calendar-day.br-selected {
-    background-color: #c5a572 !important;
+.br-calendar-day.br-available:hover .br-day-number {
     color: #fff;
 }
 
-.br-day.br-selected .br-day-number,
-.br-day.br-selected .br-day-price,
-.br-calendar-day.br-selected .br-day-number,
-.br-calendar-day.br-selected .br-day-price {
-    color: #fff !important;
+.br-calendar-day.br-available:hover .br-day-price {
+    color: #fff;
+    font-weight: 700;
 }
 
-/* Unavailable/Booked Days */
-.br-week-start.br-unavailable,
+/* Selected Days */
+.br-calendar-day.br-selected {
+    background-color: #2c5f8d !important; /* Dark blue for selected */
+    color: #fff;
+}
+
+.br-calendar-day.br-selected .br-day-number {
+    color: #fff !important;
+    font-weight: 600;
+}
+
+.br-calendar-day.br-selected .br-day-price {
+    color: #fff !important;
+    opacity: 0.9;
+}
+
+.br-calendar-day.br-checkin,
+.br-calendar-day.br-checkout {
+    position: relative;
+}
+
+.br-calendar-day.br-checkin::after {
+    content: 'IN';
+    position: absolute;
+    bottom: 2px;
+    font-size: 9px;
+    font-weight: 700;
+    color: #fff;
+}
+
+.br-calendar-day.br-checkout::after {
+    content: 'OUT';
+    position: absolute;
+    bottom: 2px;
+    font-size: 9px;
+    font-weight: 700;
+    color: #fff;
+}
+
+/* Booked Days */
 .br-calendar-day.br-booked,
 .br-day.br-booked {
-    background-color: #f5f5f5;
+    background-color: #4a4a4a; /* Darker grey for booked */
     cursor: not-allowed;
 }
 
-.br-week-start.br-unavailable .br-day-number,
 .br-calendar-day.br-booked .br-day-number,
 .br-day.br-booked .br-day-number {
     color: #999;
     text-decoration: line-through;
-}
-
-.br-week-start.br-unavailable .br-day-price {
-    display: none;
-}
-
-/* Pending Days */
-.br-calendar-day.br-pending,
-.br-day.br-pending {
-    background-color: #fff3cd;
-    cursor: not-allowed;
-}
-
-.br-calendar-day.br-pending .br-day-number,
-.br-day.br-pending .br-day-number {
-    color: #856404;
 }
 
 /* Past Days */
@@ -288,9 +262,7 @@
 }
 
 .br-day.br-past .br-day-number,
-.br-day.br-past .br-day-price,
-.br-calendar-day.br-past .br-day-number,
-.br-calendar-day.br-past .br-day-price {
+.br-calendar-day.br-past .br-day-number {
     color: #ccc;
 }
 
@@ -304,84 +276,35 @@
     color: #ddd;
 }
 
-/* Selected Weeks Summary */
-.br-selected-weeks,
-.br-selected-weeks-summary {
+/* Selected Dates Summary */
+.br-selected-dates {
     background: #f9f9f9;
     border: 1px solid #e5e5e5;
     padding: 20px;
     margin-top: 24px;
 }
 
-.br-selected-weeks h3,
-.br-selected-weeks-summary h4 {
+.br-selected-dates h3 {
     margin: 0 0 16px 0;
     font-size: 18px;
     color: #1a1a1a;
     font-weight: 500;
 }
 
-.br-week-count {
-    color: #c5a572;
-    font-weight: 700;
+.br-selected-dates-info p {
+    margin: 8px 0;
+    font-size: 15px;
+    color: #555;
 }
 
-.br-selected-weeks-list,
-.br-weeks-list {
-    margin-bottom: 16px;
-}
-
-.br-week-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 12px;
-    background: #fff;
-    border: 1px solid #e0e0e0;
-    margin-bottom: 8px;
-}
-
-.br-week-dates {
-    font-size: 14px;
-    color: #222;
-    flex: 1;
-}
-
-.br-week-price {
+.br-selected-dates-info span {
     font-weight: 600;
+    color: #2c5f8d;
+}
+
+.br-total-price-info span {
     color: #c5a572;
-    margin: 0 16px;
-}
-
-.br-remove-week {
-    background: none;
-    border: none;
-    cursor: pointer;
-    font-size: 20px;
-    line-height: 1;
-    color: #999;
-    padding: 0 5px;
-    transition: all 0.2s;
-}
-
-.br-remove-week:hover {
-    color: #d93025;
-    transform: scale(1.1);
-}
-
-.br-total-price {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 20px;
-    padding-top: 16px;
-    border-top: 2px solid #e0e0e0;
-}
-
-.br-total-price,
-.br-price-total {
-    color: #1a3a52;
-    font-weight: 600;
+    font-size: 18px;
 }
 
 /* Loading State */
@@ -407,17 +330,16 @@
     100% { transform: rotate(360deg); }
 }
 
-/* Booking Form */
-.br-booking-form,
-.br-booking-form-container {
+/* Booking Form - Always visible */
+.br-booking-form {
     border-top: 1px solid #ebebeb;
     background-color: #f7f7f7;
     padding: 24px;
     margin-top: 24px;
+    display: block !important; /* Always show form */
 }
 
-.br-booking-form h3,
-.br-form-header h3 {
+.br-booking-form h3 {
     margin: 0 0 20px 0;
     font-size: 22px;
     font-weight: 500;
@@ -425,8 +347,7 @@
 }
 
 /* Form Layout */
-.br-form-row,
-.br-form-grid {
+.br-form-row {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 16px;
@@ -466,9 +387,57 @@
     resize: vertical;
 }
 
+/* Additional Services */
+.br-additional-services {
+    margin: 24px 0;
+    padding: 20px;
+    background: #fff;
+    border: 1px solid #e5e5e5;
+    border-radius: 4px;
+}
+
+.br-additional-services h4 {
+    margin: 0 0 8px 0;
+    font-size: 18px;
+    font-weight: 500;
+    color: #1a1a1a;
+}
+
+.br-services-note {
+    margin: 0 0 16px 0;
+    font-size: 14px;
+    color: #666;
+    font-style: italic;
+}
+
+.br-service-options {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.br-checkbox-label {
+    display: flex;
+    align-items: flex-start;
+    cursor: pointer;
+    font-size: 14px;
+    color: #555;
+    line-height: 1.4;
+}
+
+.br-checkbox-label input[type="checkbox"] {
+    width: auto;
+    margin-right: 10px;
+    margin-top: 2px;
+    flex-shrink: 0;
+}
+
+.br-checkbox-label:hover {
+    color: #2c5f8d;
+}
+
 /* Submit Button */
-.br-submit-button,
-.br-btn-primary {
+.br-submit-button {
     background-color: #1a3a52;
     color: #fff;
     border: none;
@@ -479,48 +448,67 @@
     transition: all 0.2s ease;
     text-transform: uppercase;
     letter-spacing: 1px;
-    display: inline-block;
-    width: 100%;
-    margin-top: 10px;
+    display: block;
+    width: 230px;
+    margin: 20px auto 10px auto;
 }
 
-.br-submit-button:hover:not(:disabled),
-.br-btn-primary:hover:not(:disabled) {
+/* Alternative: wrap button in a div for centering */
+.br-booking-form-inner {
+    text-align: center;
+}
+
+.br-booking-form-inner .br-form-group,
+.br-booking-form-inner .br-form-row,
+.br-booking-form-inner .br-additional-services {
+    text-align: left;
+}
+
+.br-submit-button:hover:not(:disabled) {
     background-color: #0f2436;
     transform: translateY(-1px);
 }
 
-.br-submit-button:disabled,
-.br-btn-primary:disabled {
+.br-submit-button:disabled {
     opacity: 0.6;
     cursor: not-allowed;
 }
 
 /* Messages */
-.br-message,
-.br-form-message {
-    margin: 0 0 20px 0;
+.br-message {
+    margin: 20px 0 0 0;
     padding: 16px;
     font-size: 14px;
     font-weight: 500;
     border: 1px solid;
+    border-radius: 4px;
+    animation: slideIn 0.3s ease-out;
 }
 
-.br-message.success,
-.br-form-message.success {
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.br-message.success {
     background-color: #e3f2fd;
     color: #0d47a1;
     border-color: #1976d2;
 }
 
-.br-message.error,
-.br-form-message.error {
+.br-message.error {
     background-color: #f5f5f5;
     color: #424242;
     border-color: #9e9e9e;
 }
 
-/* Legend */
+/* Legend - Updated without pending */
 .br-calendar-legend {
     display: flex;
     gap: 20px;
@@ -544,19 +532,15 @@
 }
 
 .br-legend-color.available {
-    background-color: #e3f2fd;
+    background-color: #f8f9fa;
 }
 
 .br-legend-color.selected {
-    background-color: #c5a572;
+    background-color: #2c5f8d;
 }
 
 .br-legend-color.booked {
-    background-color: #f5f5f5;
-}
-
-.br-legend-color.pending {
-    background-color: #fff3cd;
+    background-color: #4a4a4a;
 }
 
 /* Responsive Design */
@@ -573,61 +557,46 @@
         padding: 16px;
     }
     
-    .br-months-wrapper,
-    .br-calendar-months-wrapper {
+    .br-months-wrapper {
         grid-template-columns: 1fr;
         gap: 20px;
     }
     
-    .br-calendar-nav,
     .br-month-navigation {
         gap: 10px;
     }
     
-    .br-nav-prev span,
-    .br-nav-next span {
-        display: none;
-    }
-    
-    .br-nav-prev,
-    .br-nav-next,
     .br-nav-button {
         padding: 8px 12px;
         background: #f7f7f7;
     }
     
-    .br-current-months,
-    .br-nav-months {
+    .br-current-months {
         font-size: 16px;
     }
     
-    .br-form-row,
-    .br-form-grid {
+    .br-form-row {
         grid-template-columns: 1fr;
     }
     
-    .br-week-item {
-        flex-wrap: wrap;
-        gap: 8px;
+    .br-service-options {
+        font-size: 13px;
     }
     
-    .br-week-dates {
-        flex: 1 1 100%;
+    .br-submit-button {
+        max-width: 100%;
     }
 }
 
 @media (max-width: 480px) {
-    .br-calendar-header h2,
-    .br-calendar-title h3 {
+    .br-calendar-header h2 {
         font-size: 24px;
     }
     
-    .br-month,
-    .br-calendar-month {
+    .br-month {
         padding: 10px;
     }
     
-    .br-weekday,
     .br-day-name {
         font-size: 11px;
         padding: 4px 0;
@@ -637,12 +606,15 @@
         font-size: 12px;
     }
     
-    .br-day-price {
-        font-size: 9px;
+    .br-calendar-day {
+        min-height: 40px;
     }
     
-    .br-calendar-day,
-    .br-day {
-        min-height: 40px;
+    .br-checkbox-label {
+        font-size: 13px;
+    }
+    
+    .br-services-note {
+        font-size: 13px;
     }
 }
