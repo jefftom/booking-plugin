@@ -87,7 +87,7 @@ if ($booking && !empty($booking->additional_services)) {
                 <td>
                     <span id="total-price-display">
                         <?php if ($booking): ?>
-                            €<?php echonumber_format($booking->total_price, 0, '.', ','); ?>
+                            €<?php echo number_format($booking->total_price, 0, '.', ','); ?>
                         <?php else: ?>
                             €0
                         <?php endif; ?>
